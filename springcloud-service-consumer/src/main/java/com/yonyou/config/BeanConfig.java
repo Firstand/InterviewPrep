@@ -1,5 +1,7 @@
 package com.yonyou.config;
 
+import com.netflix.loadbalancer.IRule;
+import com.netflix.loadbalancer.RetryRule;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,4 +15,11 @@ public class BeanConfig {
     public RestTemplate restTemplate(){
         return new RestTemplate();
     }
+
+    @Bean
+    public IRule iRule(){
+//        return new RandomRule();
+        return new RetryRule();
+    }
+
 }
