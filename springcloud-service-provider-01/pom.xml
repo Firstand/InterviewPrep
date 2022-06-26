@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.yonyou</groupId>
-    <artifactId>springcloud-service-provider</artifactId>
+    <artifactId>springcloud-service-provider-01</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>springcloud-service-provider</name>
     <description>Demo project for Spring Boot</description>
