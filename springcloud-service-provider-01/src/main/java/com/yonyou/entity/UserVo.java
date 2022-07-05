@@ -71,4 +71,8 @@ public class UserVo {
     public void setUserNode(String userNode) {
         this.userNode = userNode;
     }
+
+    public String getDefaultTableName(){
+        return "sm_user";
+    }
 }

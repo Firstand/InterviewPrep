@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yonyou.mapper.SmUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.yonyou.domain.SmUser">
+            <id property="cuserid" column="CUSERID" jdbcType="VARCHAR"/>
+            <result property="userpassword" column="USERPASSWORD" jdbcType="VARCHAR"/>
+            <result property="username" column="USERNAME" jdbcType="VARCHAR"/>
+            <result property="usercode" column="USERCODE" jdbcType="VARCHAR"/>
+            <result property="usernode" column="USERNODE" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        CUSERID,USERPASSWORD,USERNAME,
+        USERCODE,USERNODE
+    </sql>
+</mapper>
