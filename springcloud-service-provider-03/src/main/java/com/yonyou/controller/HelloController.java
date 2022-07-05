@@ -8,7 +8,7 @@ public class HelloController {
 
     @RequestMapping("hello")
     private String hello() {
-        return "你好，我是服务9093";
+        return "你好，我是服务9094";
     }
 
 }
