@@ -18,7 +18,8 @@ public enum MsgType {
     location("location", "地理位置消息"),
     link("link", "链接消息"),
     music("music", "音乐消息"),
-    news("news", "图文消息");
+    news("news", "图文消息"),
+    unknown("unknown", "异常消息");
 
     MsgType(String msgType, String msgTypeDesc) {
         this.msgType = msgType;
@@ -71,7 +72,7 @@ public enum MsgType {
             case "news":
                 return news;
             default:
-                return null;
+                return unknown;
         }
     }
 }

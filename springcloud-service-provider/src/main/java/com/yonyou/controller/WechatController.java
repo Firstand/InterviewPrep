@@ -1,19 +1,30 @@
 package com.yonyou.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.yonyou.domain.*;
 import com.yonyou.utils.WechatUtils;
 import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.common.api.WxConsts;
 import me.chanjar.weixin.common.error.WxErrorException;
+import me.chanjar.weixin.common.util.XmlUtils;
+import me.chanjar.weixin.mp.bean.message.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Objects;
 
 @RestController
 @Slf4j
+@RequestMapping("/woa")
 public class WechatController {
     /**
      * 工具类
@@ -26,9 +37,12 @@ public class WechatController {
      *
      * @return 验签信息
      */
-    @RequestMapping(value = "/wechat", method = RequestMethod.GET)
+    @RequestMapping(value = "wechat", method = RequestMethod.GET)
     public String checkSignature(String signature, String timestamp,
                                  String nonce, String echostr) {
+        if(StringUtils.isEmpty(signature) || StringUtils.isEmpty(timestamp) || StringUtils.isEmpty(nonce) || StringUtils.isEmpty(echostr)){
+            return null;
+        }
         log.info("signature = {}", signature);
         log.info("timestamp = {}", timestamp);
         log.info("nonce = {}", nonce);
@@ -49,50 +63,61 @@ public class WechatController {
     /**
      * 接收用户消息
      *
-     * @param receiveMsgBody 消息
+     * @param wxMpXmlMessage 消息
      * @return 响应内容
      */
     @RequestMapping(value = "/wechat", method = RequestMethod.POST, produces = {"application/xml; charset=UTF-8"})
     @ResponseBody
-    public Object getUserMessage(@RequestBody ReceiveMsgBody receiveMsgBody) {
-        log.info("接收到的消息：{}", receiveMsgBody);
-        MsgType msgType = MsgType.getMsgType(receiveMsgBody.getMsgType());
-        switch (Objects.requireNonNull(msgType)) {
-            case text:
-                log.info("接收到的消息类型为{}", MsgType.text.getMsgTypeDesc());
-                ResponseMsgBody textMsg = new ResponseMsgBody();
-                textMsg.setToUserName(receiveMsgBody.getFromUserName());
-                textMsg.setFromUserName(receiveMsgBody.getToUserName());
-                textMsg.setCreateTime(System.currentTimeMillis());
-                textMsg.setMsgType(MsgType.text.getMsgType());
-                textMsg.setContent(receiveMsgBody.getContent());
-                return textMsg;
-            case image:
-                log.info("接收到的消息类型为{}", MsgType.image.getMsgTypeDesc());
-                ResponseImageMsg imageMsg = new ResponseImageMsg();
-                imageMsg.setToUserName(receiveMsgBody.getFromUserName());
-                imageMsg.setFromUserName(receiveMsgBody.getToUserName());
-                imageMsg.setCreateTime(System.currentTimeMillis());
-                imageMsg.setMsgType(MsgType.image.getMsgType());
-                imageMsg.setMediaId(new String[]{receiveMsgBody.getMediaId()});
-                return imageMsg;
-            case voice:
-                log.info("接收到的消息类型为{}", MsgType.voice.getMsgTypeDesc());
-                ResponseVoiceMsg voiceMsg = new ResponseVoiceMsg();
-                voiceMsg.setToUserName(receiveMsgBody.getFromUserName());
-                voiceMsg.setFromUserName(receiveMsgBody.getToUserName());
-                voiceMsg.setCreateTime(System.currentTimeMillis());
-                voiceMsg.setMsgType(MsgType.voice.getMsgType());
-                voiceMsg.setMediaId(new String[]{receiveMsgBody.getMediaId()});
-                return voiceMsg;
+    public Object getUserMessage(@RequestBody WxMpXmlMessage wxMpXmlMessage) throws JsonProcessingException {
+        log.info("message 接收到的消息：{}", wxMpXmlMessage);
+        MsgType msgType = MsgType.getMsgType(wxMpXmlMessage.getMsgType());
+        log.info("message 接收到的消息类型为{}", msgType.getMsgTypeDesc());
+        WxMpXmlOutMessage wxMpXmlOutMessage;
+        switch (msgType.getMsgType()) {
+            case WxConsts.XmlMsgType.TEXT:
+                wxMpXmlOutMessage = WxMpXmlOutMessage.TEXT()
+                        .content(wxMpXmlMessage.getContent())
+                        .fromUser(wxMpXmlMessage.getToUser())
+                        .toUser(wxMpXmlMessage.getFromUser())
+                        .build();
+                break;
+            case WxConsts.XmlMsgType.VOICE:
+                wxMpXmlOutMessage =  WxMpXmlOutMessage.VOICE()
+                        .mediaId(wxMpXmlMessage.getMediaId())
+                        .fromUser(wxMpXmlMessage.getToUser())
+                        .toUser(wxMpXmlMessage.getFromUser())
+                        .build();
+                break;
+            case WxConsts.XmlMsgType.VIDEO:
+                wxMpXmlOutMessage = WxMpXmlOutMessage.VIDEO()
+                        .mediaId(wxMpXmlMessage.getMediaId())
+                        .fromUser(wxMpXmlMessage.getToUser())
+                        .toUser(wxMpXmlMessage.getFromUser())
+                        .title(wxMpXmlMessage.getTitle())
+                        .description(wxMpXmlMessage.getDescription())
+                        .build();
+                break;
+            case WxConsts.XmlMsgType.IMAGE:
+                wxMpXmlOutMessage = WxMpXmlOutMessage.IMAGE()
+                        .mediaId(wxMpXmlMessage.getMediaId())
+                        .fromUser(wxMpXmlMessage.getToUser())
+                        .toUser(wxMpXmlMessage.getFromUser())
+                        .build();
+                break;
             default:
-                // 其他类型
+                wxMpXmlOutMessage = WxMpXmlOutMessage.TEXT()
+                        .content("你发的啥消息呀，没整明白![Facepalm]")
+                        .fromUser(wxMpXmlMessage.getToUser())
+                        .toUser(wxMpXmlMessage.getFromUser())
+                        .build();
                 break;
         }
-        return null;
+        log.info("message 回复的消息：{}", wxMpXmlOutMessage);
+        log.info("message 回复的消息类型为{}", MsgType.getMsgType(wxMpXmlMessage.getMsgType()).getMsgTypeDesc());
+        return wxMpXmlOutMessage;
     }
 
-    @RequestMapping("/getAccessToken")
+    @RequestMapping("getAccessToken")
     public void getAccessToken() {
         try {
             String accessToken = wechatUtils.getAccessToken();
