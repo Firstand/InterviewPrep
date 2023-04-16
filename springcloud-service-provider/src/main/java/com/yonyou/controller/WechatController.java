@@ -69,7 +69,7 @@ public class WechatController {
     @RequestMapping(value = "/wechat", method = RequestMethod.POST, produces = {"application/xml; charset=UTF-8"})
     @ResponseBody
     public Object getUserMessage(@RequestBody WxMpXmlMessage wxMpXmlMessage) throws JsonProcessingException {
-        log.info("message 接收到的消息：{}", wxMpXmlMessage);
+        log.info("message 接收到的消息：{}", new XmlMapper().writeValueAsString(wxMpXmlMessage));
         MsgType msgType = MsgType.getMsgType(wxMpXmlMessage.getMsgType());
         log.info("message 接收到的消息类型为{}", msgType.getMsgTypeDesc());
         WxMpXmlOutMessage wxMpXmlOutMessage;
@@ -93,8 +93,8 @@ public class WechatController {
                         .mediaId(wxMpXmlMessage.getMediaId())
                         .fromUser(wxMpXmlMessage.getToUser())
                         .toUser(wxMpXmlMessage.getFromUser())
-                        .title(wxMpXmlMessage.getTitle())
-                        .description(wxMpXmlMessage.getDescription())
+                        .title("这个是视频标题")
+                        .description("这个是视频描述")
                         .build();
                 break;
             case WxConsts.XmlMsgType.IMAGE:
@@ -112,9 +112,10 @@ public class WechatController {
                         .build();
                 break;
         }
-        log.info("message 回复的消息：{}", wxMpXmlOutMessage);
+        String replyXmlMessage = wxMpXmlOutMessage.toXml();
+        log.info("message 回复的消息：{}", replyXmlMessage);
         log.info("message 回复的消息类型为{}", MsgType.getMsgType(wxMpXmlMessage.getMsgType()).getMsgTypeDesc());
-        return wxMpXmlOutMessage;
+        return replyXmlMessage;
     }
 
     @RequestMapping("getAccessToken")
