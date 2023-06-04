@@ -26,7 +26,7 @@ public class WebController {
 
     @RequestMapping("web")
     private String web() {
-        return restTemplate.getForEntity("https://springcloud-service-provider9091/hello", String.class).getBody();
+        return restTemplate.getForEntity("https://springcloud-service-provider/hello", String.class).getBody();
     }
 
 }
